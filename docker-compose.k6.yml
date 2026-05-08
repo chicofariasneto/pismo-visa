@@ -1,0 +1,15 @@
+services:
+  k6:
+    image: grafana/k6:latest
+    command: run /scripts/load_test.js
+    environment:
+      BASE_URL: ${BASE_URL:-http://host.docker.internal:8000}
+    volumes:
+      - ./k6:/scripts
+    networks:
+      - pismo-network
+
+networks:
+  pismo-network:
+    external: true
+    name: pismo-network

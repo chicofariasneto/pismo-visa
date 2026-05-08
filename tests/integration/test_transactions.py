@@ -81,3 +81,34 @@ async def test_create_transaction_account_not_found(client):
     )
 
     assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "operation_type_id,amount",
+    [
+        (1, "100.00"),  # Normal Purchase with positive amount
+        (2, "50.00"),  # Purchase with installments with positive amount
+        (3, "200.00"),  # Withdrawal with positive amount
+        (4, "-30.00"),  # Credit Voucher with negative amount
+    ],
+)
+@pytest.mark.integration
+async def test_create_transaction_invalid_amount_sign_returns_422(
+    client, operation_type_id, amount
+):
+    create_account = await client.post(
+        "/api/v1/accounts/", json={"document_number": "99988877700"}
+    )
+    account_id = create_account.json()["account_id"]
+
+    response = await client.post(
+        "/api/v1/transactions/",
+        json={
+            "account_id": account_id,
+            "operation_type_id": operation_type_id,
+            "amount": amount,
+        },
+    )
+
+    assert response.status_code == 422

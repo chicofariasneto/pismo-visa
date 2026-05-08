@@ -58,3 +58,41 @@ async def test_create_transaction_account_not_found(db):
     assert result is None
     db.add.assert_not_called()
     db.commit.assert_not_awaited()
+
+
+@pytest.mark.parametrize(
+    "operation_type_id,amount",
+    [
+        (1, Decimal("-50.00")),  # Normal Purchase
+        (2, Decimal("-150.00")),  # Purchase with installments
+        (3, Decimal("-200.00")),  # Withdrawal
+        (4, Decimal("300.00")),  # Credit Voucher
+    ],
+)
+def test_transaction_create_schema_valid_amounts(operation_type_id, amount):
+    data = TransactionCreate(
+        account_id=uuid.uuid4(),
+        operation_type_id=operation_type_id,
+        amount=amount,
+    )
+    assert data.amount == amount
+
+
+@pytest.mark.parametrize(
+    "operation_type_id,amount",
+    [
+        (1, Decimal("50.00")),  # Normal Purchase with positive amount
+        (2, Decimal("150.00")),  # Purchase with installments with positive amount
+        (3, Decimal("200.00")),  # Withdrawal with positive amount
+        (4, Decimal("-300.00")),  # Credit Voucher with negative amount
+        (1, Decimal("0.00")),  # zero on debit operation
+        (4, Decimal("0.00")),  # zero on credit operation
+    ],
+)
+def test_transaction_create_schema_invalid_amounts(operation_type_id, amount):
+    with pytest.raises(Exception):
+        TransactionCreate(
+            account_id=uuid.uuid4(),
+            operation_type_id=operation_type_id,
+            amount=amount,
+        )
